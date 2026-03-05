@@ -52,3 +52,7 @@ Recommended Cloudflare API token scope:
 
 - Zone: `tobbyhagler.com`
 - Permissions: `Cache Purge:Edit` (and optionally `Zone:Read`)
+
+Manual debug option:
+
+- In GitHub Actions, run `Purge Cloudflare Cache` with `purge_everything=true` to force a full-zone cache purge if host purge is rejected by Cloudflare plan/policy.

@@ -1,9 +1,16 @@
 name: Purge Cloudflare Cache
 
+run-name: Purge Cloudflare cache
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      purge_everything:
+        description: "Set to true to purge entire zone cache (debug/fallback)"
+        required: false
+        default: "false"
 
 permissions:
   contents: read
@@ -35,20 +42,43 @@ jobs:
         env:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PURGE_EVERYTHING_INPUT: ${{ github.event.inputs.purge_everything || 'false' }}
         run: |
-          response=$(curl -sS -X POST \
+          set -euo pipefail
+
+          payload='{"hosts":["games.tobbyhagler.com"]}'
+          if [ "$PURGE_EVERYTHING_INPUT" = "true" ]; then
+            payload='{"purge_everything":true}'
+            echo "Using purge_everything mode"
+          else
+            echo "Using host purge mode for games.tobbyhagler.com"
+          fi
+
+          response=$(curl -sS --fail-with-body -X POST \
             "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"hosts":["games.tobbyhagler.com"]}')
+            -d "$payload")
 
           echo "$response"
 
-          python3 - <<'PY' "$response"
+          python3 - <<'PY' <<< "$response"
 import json
 import sys
 
-payload = json.loads(sys.argv[1])
-if not payload.get("success"):
-    raise SystemExit("Cloudflare purge failed")
+result = json.loads(sys.stdin.read())
+if result.get("success"):
+    print("Cloudflare purge succeeded")
+    raise SystemExit(0)
+
+errors = result.get("errors", [])
+if errors:
+    details = "; ".join(
+        f"{e.get('code', 'unknown')}: {e.get('message', 'no message')}"
+        for e in errors
+    )
+else:
+    details = "No Cloudflare error details were returned."
+
+raise SystemExit(f"Cloudflare purge failed: {details}")
 PY
