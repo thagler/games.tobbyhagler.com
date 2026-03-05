@@ -64,12 +64,13 @@ jobs:
           echo "$response"
           echo "Cloudflare HTTP status: $http_code"
 
-          python3 - "$http_code" <<'PY' <<< "$response"
+          CLOUDFLARE_RESPONSE="$response" python3 - "$http_code" <<'PY'
           import json
+          import os
           import sys
 
           http_code = int(sys.argv[1])
-          raw = sys.stdin.read()
+          raw = os.environ["CLOUDFLARE_RESPONSE"]
 
           try:
               result = json.loads(raw)
