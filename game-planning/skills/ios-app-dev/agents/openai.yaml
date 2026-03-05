@@ -1,0 +1,4 @@
+interface:
+  display_name: "iOS App Dev"
+  short_description: "Native iOS app dev and QA workflow"
+  default_prompt: "Implement and validate native iOS app functionality using Xcode, Swift Testing/XCTest, simulator and device checks, and performance-aware review gates."

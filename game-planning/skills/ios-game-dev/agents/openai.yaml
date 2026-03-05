@@ -1,0 +1,4 @@
+interface:
+  display_name: "iOS Game Dev"
+  short_description: "Native iOS game dev and QA workflow"
+  default_prompt: "Build and validate native iOS games with SpriteKit/GameplayKit, animation effects, haptics, and monetization integrations using structured QA gates."

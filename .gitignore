@@ -1,0 +1,4 @@
+# Keep planning docs tracked; ignore blackboard runtime files
+# while allowing the shared index template to be versioned.
+game-planning/docs/.blackboard/*
+!game-planning/docs/.blackboard/INDEX.md

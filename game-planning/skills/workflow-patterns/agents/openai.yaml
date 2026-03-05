@@ -1,0 +1,4 @@
+interface:
+  display_name: "Workflow Patterns"
+  short_description: "Codex orchestration patterns for multi-agent-style workflows"
+  default_prompt: "Select and apply orchestration patterns (plan-execute, pipeline, map-reduce, checkpoint-resume, reflexion, blackboard) with concise handoffs and bounded context usage."

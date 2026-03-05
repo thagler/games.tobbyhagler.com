@@ -1,0 +1,4 @@
+interface:
+  display_name: "App Store Release"
+  short_description: "App Store Connect release workflow"
+  default_prompt: "Prepare, validate, and execute iOS app/game release workflows in App Store Connect, including metadata, privacy, review readiness, TestFlight, and phased release operations."
