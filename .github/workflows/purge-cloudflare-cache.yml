@@ -1,0 +1,54 @@
+name: Purge Cloudflare Cache
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-purge-main
+  cancel-in-progress: true
+
+jobs:
+  purge-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate required secrets
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_ZONE_ID" ]; then
+            echo "Missing secret: CLOUDFLARE_ZONE_ID"
+            exit 1
+          fi
+
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "Missing secret: CLOUDFLARE_API_TOKEN"
+            exit 1
+          fi
+
+      - name: Purge Cloudflare cache for games.tobbyhagler.com
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          response=$(curl -sS -X POST \
+            "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"hosts":["games.tobbyhagler.com"]}')
+
+          echo "$response"
+
+          python3 - <<'PY' "$response"
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+if not payload.get("success"):
+    raise SystemExit("Cloudflare purge failed")
+PY

@@ -38,3 +38,17 @@ Requirements:
 - Slug must use lowercase letters, numbers, and hyphens.
 
 The resulting game URL path is `/games/<game-slug>/`.
+
+## Cloudflare cache purge
+
+This repo includes a GitHub Actions workflow at `.github/workflows/purge-cloudflare-cache.yml` that purges Cloudflare cache for `games.tobbyhagler.com` on each push to `main` (and on manual dispatch).
+
+Required GitHub repository secrets:
+
+- `CLOUDFLARE_ZONE_ID`
+- `CLOUDFLARE_API_TOKEN`
+
+Recommended Cloudflare API token scope:
+
+- Zone: `tobbyhagler.com`
+- Permissions: `Cache Purge:Edit` (and optionally `Zone:Read`)
