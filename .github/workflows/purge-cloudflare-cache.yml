@@ -62,23 +62,4 @@ jobs:
 
           echo "$response"
 
-          python3 - <<'PY' <<< "$response"
-import json
-import sys
-
-result = json.loads(sys.stdin.read())
-if result.get("success"):
-    print("Cloudflare purge succeeded")
-    raise SystemExit(0)
-
-errors = result.get("errors", [])
-if errors:
-    details = "; ".join(
-        f"{e.get('code', 'unknown')}: {e.get('message', 'no message')}"
-        for e in errors
-    )
-else:
-    details = "No Cloudflare error details were returned."
-
-raise SystemExit(f"Cloudflare purge failed: {details}")
-PY
+          RESPONSE="$response" python3 -c 'import json, os, sys; result = json.loads(os.environ["RESPONSE"]); errors = result.get("errors", []); details = "; ".join(f"{e.get(\"code\", \"unknown\")}: {e.get(\"message\", \"no message\")}" for e in errors) if errors else "No Cloudflare error details were returned."; print("Cloudflare purge succeeded") if result.get("success") else sys.exit(f"Cloudflare purge failed: {details}")'
