@@ -54,12 +54,40 @@ jobs:
             echo "Using host purge mode for games.tobbyhagler.com"
           fi
 
-          response=$(curl -sS --fail-with-body -X POST \
+          http_code=$(curl -sS -o /tmp/cloudflare_response.json -w "%{http_code}" -X POST \
             "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H "Content-Type: application/json" \
             -d "$payload")
 
+          response="$(cat /tmp/cloudflare_response.json)"
           echo "$response"
+          echo "Cloudflare HTTP status: $http_code"
 
-          RESPONSE="$response" python3 -c 'import json, os, sys; result = json.loads(os.environ["RESPONSE"]); errors = result.get("errors", []); details = "; ".join(f"{e.get(\"code\", \"unknown\")}: {e.get(\"message\", \"no message\")}" for e in errors) if errors else "No Cloudflare error details were returned."; print("Cloudflare purge succeeded") if result.get("success") else sys.exit(f"Cloudflare purge failed: {details}")'
+          python3 - "$http_code" <<'PY' <<< "$response"
+          import json
+          import sys
+
+          http_code = int(sys.argv[1])
+          raw = sys.stdin.read()
+
+          try:
+              result = json.loads(raw)
+          except json.JSONDecodeError:
+              raise SystemExit(f"Cloudflare returned non-JSON response (HTTP {http_code}): {raw[:500]}")
+
+          if 200 <= http_code < 300 and result.get("success"):
+              print("Cloudflare purge succeeded")
+              raise SystemExit(0)
+
+          errors = result.get("errors", [])
+          if errors:
+              details = "; ".join(
+                  f"{e.get('code', 'unknown')}: {e.get('message', 'no message')}"
+                  for e in errors
+              )
+          else:
+              details = f"No Cloudflare error details were returned. HTTP {http_code}"
+
+          raise SystemExit(f"Cloudflare purge failed: {details}")
+          PY
