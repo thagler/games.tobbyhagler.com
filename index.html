@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>games.tobbyhagler.com</title>
+  <style>
+    :root {
+      --bg: #f3efe5;
+      --ink: #1c1b18;
+      --accent: #005f73;
+      --card: #fffaf0;
+      --line: #d8d1c0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: radial-gradient(circle at top left, #fffdf7 0%, var(--bg) 55%, #e8e0cf 100%);
+      color: var(--ink);
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 1.25rem;
+    }
+
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: 0.02em;
+    }
+
+    p { margin-top: 0.25rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 1.75rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .card h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.15rem;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>games.tobbyhagler.com</h1>
+    <p>A home for upcoming web games and playtest builds.</p>
+
+    <section class="grid" aria-label="Game collection">
+      <article class="card">
+        <h2>Upcoming Games</h2>
+        <p>Published builds will appear under <code>/games/&lt;game-slug&gt;/</code>.</p>
+      </article>
+      <article class="card">
+        <h2>Development Plan</h2>
+        <p>Shared planning, skills, and orchestration docs live in <code>/game-planning/</code>.</p>
+      </article>
+      <article class="card">
+        <h2>Status</h2>
+        <p>Showcase scaffold is live. Next step is adding the first game card and playable build.</p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
