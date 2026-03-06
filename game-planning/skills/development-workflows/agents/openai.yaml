@@ -1,0 +1,4 @@
+interface:
+  display_name: "Development Workflows"
+  short_description: "Pattern-driven agentic software workflow orchestration"
+  default_prompt: "Design and execute a development workflow with explicit pattern selection, handoff contracts, context-efficiency controls, and quality-gated validation."

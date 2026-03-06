@@ -86,6 +86,7 @@ Sub-agents must load only the skills required for their scope.
 - App Store Connect submission/release operations: load `app-store-release`.
 - Tooling/setup work: load install/config skills relevant to package manager and bundler.
 - Orchestration-heavy work: load `workflow-patterns` for pattern selection and handoff contracts.
+- End-to-end development workflow design or optimization work: load `development-workflows` (and its dependency `workflow-patterns`).
 - Generic docs/refactor work: do not load heavy implementation skills unless code changes require them.
 
 Always include the selected skill(s) in the handoff summary.
