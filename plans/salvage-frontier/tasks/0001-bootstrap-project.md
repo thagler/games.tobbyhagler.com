@@ -3,6 +3,14 @@
 ## Objective
 Set up the project scaffold and a minimal playable test scene.
 
+## Why
+This creates the execution foundation for the first transit slice so loop-critical mechanics can be tested quickly.
+
+## Requirements
+- create initial project directory and baseline app target
+- provide a single placeholder gameplay scene
+- wire basic input path for movement and shooting tests
+
 ## Constraints
 - prioritize speed to first playable
 - no advanced architecture work

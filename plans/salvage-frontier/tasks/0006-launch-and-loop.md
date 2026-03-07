@@ -3,6 +3,14 @@
 ## Objective
 Close the full loop by enabling launch and route selection for next run.
 
+## Why
+This validates loop completion and replayability by transitioning from outpost success/failure into route-based next-run choice.
+
+## Requirements
+- enable launch action once fuel requirement is met
+- present exactly three route options after launch
+- apply a simple route modifier to the next loop instance
+
 ## Constraints
 - exactly three route options in prototype
 - modifiers should be simple and testable

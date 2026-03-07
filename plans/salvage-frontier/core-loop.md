@@ -1,6 +1,12 @@
 # Core Loop
 
-`Transit combat -> choose landing -> build/extract/refuel -> defend -> launch -> choose next route -> repeat`
+Transit combat
+→ Land on outpost
+→ Extract resources
+→ Build/defend
+→ Refuel/rearm
+→ Launch
+→ Choose next route
 
 ## Fun Criteria
 - Transit is immediately legible and rewarding.

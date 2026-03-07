@@ -3,6 +3,14 @@
 ## Objective
 Create landing transition and load a basic outpost map with buildable space.
 
+## Why
+This task links transit combat to the outpost phase, proving the loop transition from combat into extraction/build decisions.
+
+## Requirements
+- implement a landing trigger from transit into outpost phase
+- load a minimal outpost map with valid buildable area
+- display resource nodes needed for extraction choices
+
 ## Constraints
 - keep outpost map small and simple
 - do not add extra systems beyond transition + placement foundation

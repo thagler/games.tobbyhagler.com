@@ -3,6 +3,15 @@
 ## Objective
 Implement minimal defense waves and extraction/refuel mechanics.
 
+## Why
+This proves the mid-loop decision tension: extract resources, build/defend against waves, and prepare refuel conditions for launch.
+
+## Requirements
+- implement turret, wall, and extractor/refinery behavior
+- run 2 to 4 outpost waves that pressure defenses
+- produce salvage or fuel from extraction/refinery systems
+- gate launch readiness on fuel threshold
+
 ## Constraints
 - keep structure set to turret, wall, extractor/refinery
 - cap outpost waves to 2 to 4

@@ -3,6 +3,14 @@
 ## Objective
 Add enemy spawning, collisions, and salvage drops in transit.
 
+## Why
+Enemy pressure plus salvage gain establishes the risk/reward foundation that feeds outpost extraction, defense choices, and refuel progression.
+
+## Requirements
+- spawn enemies in discrete waves during transit
+- resolve player/enemy collisions and damage outcomes
+- award salvage drops from defeated enemies with pickup behavior
+
 ## Constraints
 - keep to three enemy archetypes max
 - tune for readability over difficulty

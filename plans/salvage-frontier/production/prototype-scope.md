@@ -3,6 +3,15 @@
 ## Objective
 Prove one complete playable loop before expanding systems.
 
+## Canonical Core Loop
+Transit combat
+→ Land on outpost
+→ Extract resources
+→ Build/defend
+→ Refuel/rearm
+→ Launch
+→ Choose next route
+
 ## Included
 - one ship
 - bounded movement + auto-fire

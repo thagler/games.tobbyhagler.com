@@ -3,6 +3,14 @@
 ## Objective
 Implement player ship movement and auto-fire behavior for transit phase.
 
+## Why
+Transit combat is the first step of the canonical loop; readable movement and firing are mandatory before enemy and resource systems can be validated.
+
+## Requirements
+- implement bounded horizontal or lane-based ship movement
+- implement auto-fire with stable cadence
+- expose basic hit/damage integration points for later enemy work
+
 ## Constraints
 - bounded movement only
 - keep controls readable and forgiving

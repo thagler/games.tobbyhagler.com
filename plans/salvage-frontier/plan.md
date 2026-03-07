@@ -3,8 +3,15 @@
 ## Goal
 Build and validate the smallest playable loop for an iOS hybrid game that alternates between transit combat and temporary outpost defense/extraction.
 
-Core loop target:
-`transit -> land -> extract/defend -> refuel -> launch -> choose next route`
+Canonical core loop:
+
+Transit combat
+→ Land on outpost
+→ Extract resources
+→ Build/defend
+→ Refuel/rearm
+→ Launch
+→ Choose next route
 
 ## Current Milestone
 Milestone 1: Project Bootstrap
