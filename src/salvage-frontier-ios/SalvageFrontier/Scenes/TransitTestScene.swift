@@ -41,6 +41,13 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
   private var playerHull = BootstrapConfig.playerHullMax
   private var targetRespawnPending = false
   private var nextTargetSpawnTime: TimeInterval?
+  private let enemyDefinitionsByID = Dictionary(
+    uniqueKeysWithValues: PrototypeDefinitions.enemies.map { ($0.id, $0) }
+  )
+  private let weaponDefinitionsByID = Dictionary(
+    uniqueKeysWithValues: PrototypeDefinitions.weapons.map { ($0.id, $0) }
+  )
+  private var lastEncounterPatternID: String?
 
   override func didMove(to view: SKView) {
     scaleMode = .resizeFill
@@ -51,7 +58,7 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     addChild(ship)
 
     configureLaneGuides()
-    spawnTargetDummies()
+    spawnEncounterEnemies()
     configureOverlayLabels()
     refreshCombatStatusUI()
 
@@ -94,6 +101,8 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
 
     updateLaneSelectionWithHysteresis()
     updateApproachingTargets(dt)
+    updateEnemyWeaponFire(currentTime)
+    updateEnemyProjectiles(dt)
     evaluateTargetBreachRisk()
     updateTargetPracticeLoop(currentTime)
 
@@ -220,9 +229,84 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
   }
 
   private func updateApproachingTargets(_ dt: CGFloat) {
-    let approachDistance = BootstrapConfig.targetApproachSpeed * dt
-    enumerateChildNodes(withName: "target-dummy") { node, _ in
-      node.position.y -= approachDistance
+    enumerateChildNodes(withName: "enemy-unit") { node, _ in
+      let movementSpeed = (node.userData?["movementSpeed"] as? CGFloat) ?? BootstrapConfig.targetApproachSpeed
+      node.position.y -= movementSpeed * dt
+    }
+  }
+
+  private func updateEnemyWeaponFire(_ currentTime: TimeInterval) {
+    enumerateChildNodes(withName: "enemy-unit") { node, _ in
+      guard
+        let weaponID = node.userData?["weaponID"] as? String,
+        let weapon = self.weaponDefinitionsByID[weaponID]
+      else {
+        return
+      }
+
+      guard self.isEnemyFullyVisible(node) else {
+        return
+      }
+
+      if (node.userData?["hasEnteredPlayfield"] as? Bool) != true {
+        let initialFireDelay = (node.userData?["initialFireDelay"] as? TimeInterval) ?? weapon.rateOfFire
+        node.userData?["hasEnteredPlayfield"] = true
+        node.userData?["nextFireTime"] = currentTime + initialFireDelay
+        return
+      }
+
+      let nextFireTime = (node.userData?["nextFireTime"] as? TimeInterval) ?? currentTime + weapon.rateOfFire
+      if currentTime < nextFireTime {
+        return
+      }
+
+      self.fireEnemyProjectile(from: node, weapon: weapon)
+      node.userData?["nextFireTime"] = currentTime + weapon.rateOfFire
+    }
+  }
+
+  private func updateEnemyProjectiles(_ dt: CGFloat) {
+    var hitProjectiles: [SKNode] = []
+
+    enumerateChildNodes(withName: "enemy-projectile") { node, _ in
+      let projectileSpeed = (node.userData?["projectileSpeed"] as? CGFloat) ?? 320
+      node.position.y -= projectileSpeed * dt
+
+      if node.frame.intersects(self.ship.frame) {
+        hitProjectiles.append(node)
+      } else if node.position.y < self.frame.minY - 120 {
+        node.removeFromParent()
+      }
+    }
+
+    for projectile in hitProjectiles {
+      let damage = (projectile.userData?["damage"] as? Int) ?? 1
+      projectile.removeFromParent()
+      applyHullDamage(damage)
+      spawnHitFlash(at: ship.position)
+    }
+  }
+
+  private func fireEnemyProjectile(from enemy: SKNode, weapon: WeaponDefinition) {
+    let projectile = SKShapeNode(rectOf: CGSize(width: 6, height: 18), cornerRadius: 2)
+    projectile.fillColor = colorForProjectileStyle(weapon.projectileStyleID)
+    projectile.strokeColor = .clear
+    projectile.name = "enemy-projectile"
+    projectile.zPosition = 9
+    projectile.position = CGPoint(x: enemy.position.x, y: enemy.position.y - 34)
+    projectile.userData = NSMutableDictionary(dictionary: [
+      "damage": weapon.damage,
+      "projectileSpeed": weapon.projectileSpeed,
+    ])
+    addChild(projectile)
+  }
+
+  private func colorForProjectileStyle(_ styleID: String) -> SKColor {
+    switch styleID {
+    case "scout-needle":
+      return .systemOrange
+    default:
+      return .systemPink
     }
   }
 
@@ -232,7 +316,7 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     var breachedTargets: [SKNode] = []
     var missedTargets: [SKNode] = []
 
-    enumerateChildNodes(withName: "target-dummy") { node, _ in
+    enumerateChildNodes(withName: "enemy-unit") { node, _ in
       if node.position.y <= breachLineY {
         if self.isLaneMatchedForBreach(targetX: node.position.x) {
           breachedTargets.append(node)
@@ -254,7 +338,8 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
   }
 
   private func handleTargetBreach(_ target: SKNode) {
-    applyHullDamage(BootstrapConfig.targetBreachHullDamage)
+    let collisionDamage = (target.userData?["collisionDamage"] as? Int) ?? BootstrapConfig.targetBreachHullDamage
+    applyHullDamage(collisionDamage)
     destroyTarget(target, at: target.position, cueColor: .systemRed)
   }
 
@@ -349,51 +434,108 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     ship.run(.sequence([flashOn, wait, flashOff]), withKey: "hull-hit-flash")
   }
 
-  private func spawnTargetDummies() {
+  private func spawnEncounterEnemies() {
     guard !laneCenters.isEmpty else { return }
+    guard let pattern = nextEncounterPattern() else { return }
 
-    let laneIndexes = Array(laneCenters.indices.shuffled())
-    let minCount = min(max(BootstrapConfig.targetDummyMinCount, 1), laneIndexes.count)
-    let maxCount = min(max(BootstrapConfig.targetDummyMaxCount, minCount), laneIndexes.count)
-    let targetCount = Int.random(in: minCount ... maxCount)
+    for entry in pattern.entries {
+      guard laneCenters.indices.contains(entry.laneIndex) else {
+        continue
+      }
+      guard let definition = enemyDefinitionsByID[entry.enemyID] else {
+        continue
+      }
 
-    for laneIndex in laneIndexes.prefix(targetCount) {
-      let target = makeTargetDummy()
-      target.position = CGPoint(
-        x: laneCenters[laneIndex],
-        y: frame.maxY + CGFloat.random(
-          in: BootstrapConfig.targetSpawnMinYOffset ... BootstrapConfig.targetSpawnMaxYOffset
-        )
+      let enemy = makeEnemyNode(definition: definition, initialFireDelay: entry.initialFireDelay)
+      enemy.position = CGPoint(
+        x: laneCenters[entry.laneIndex],
+        y: frame.maxY + entry.spawnYOffset
       )
-      addChild(target)
+      addChild(enemy)
     }
 
+    lastEncounterPatternID = pattern.id
     refreshCombatStatusUI()
   }
 
-  private func makeTargetDummy() -> SKShapeNode {
-    let size = CGSize(width: 86, height: 48)
-    let target = SKShapeNode(rectOf: size, cornerRadius: 12)
-    target.fillColor = .systemRed
-    target.strokeColor = .white
-    target.lineWidth = 2
-    target.name = "target-dummy"
-    target.zPosition = 6
-    target.userData = NSMutableDictionary(dictionary: ["hp": BootstrapConfig.targetDummyHP])
+  private func nextEncounterPattern() -> EncounterPatternDefinition? {
+    let patterns = PrototypeDefinitions.encounterPatterns.filter { pattern in
+      pattern.entries.allSatisfy { entry in
+        laneCenters.indices.contains(entry.laneIndex) && enemyDefinitionsByID[entry.enemyID] != nil
+      }
+    }
 
-    let body = SKPhysicsBody(rectangleOf: size)
+    guard !patterns.isEmpty else { return nil }
+    let nonRepeatingPatterns = patterns.filter { $0.id != lastEncounterPatternID }
+    return (nonRepeatingPatterns.isEmpty ? patterns : nonRepeatingPatterns).randomElement()
+  }
+
+  private func makeEnemyNode(definition: EnemyDefinition, initialFireDelay: TimeInterval?) -> SKShapeNode {
+    let enemy = enemyShapeNode(for: definition)
+    enemy.name = "enemy-unit"
+    enemy.zPosition = 6
+    enemy.userData = NSMutableDictionary(dictionary: [
+      "enemyID": definition.id,
+      "hp": definition.maxHull,
+      "movementSpeed": definition.movementSpeed,
+      "collisionDamage": definition.collisionDamage,
+    ])
+    if let weaponID = definition.weaponID {
+      enemy.userData?["weaponID"] = weaponID
+      enemy.userData?["nextFireTime"] = 0.0
+      enemy.userData?["hasEnteredPlayfield"] = false
+      enemy.userData?["initialFireDelay"] = initialFireDelay ?? weaponDefinitionsByID[weaponID]?.rateOfFire ?? 0
+    }
+
+    let body: SKPhysicsBody
+    if definition.styleID == "scout-delta", let path = enemy.path {
+      body = SKPhysicsBody(polygonFrom: path)
+    } else {
+      body = SKPhysicsBody(rectangleOf: CGSize(width: 86, height: 48))
+    }
     body.isDynamic = false
     body.affectedByGravity = false
     body.categoryBitMask = PhysicsCategory.enemyBody
     body.contactTestBitMask = PhysicsCategory.playerProjectile
     body.collisionBitMask = 0
-    target.physicsBody = body
+    enemy.physicsBody = body
 
-    return target
+    return enemy
+  }
+
+  private func isEnemyFullyVisible(_ enemy: SKNode) -> Bool {
+    let enemyFrame = enemy.calculateAccumulatedFrame()
+    return frame.contains(enemyFrame)
+  }
+
+  private func enemyShapeNode(for definition: EnemyDefinition) -> SKShapeNode {
+    switch definition.styleID {
+    case "scout-delta":
+      let width: CGFloat = 72
+      let height: CGFloat = 44
+      let path = CGMutablePath()
+      path.move(to: CGPoint(x: 0, y: -height / 2))
+      path.addLine(to: CGPoint(x: width / 2, y: height / 2))
+      path.addLine(to: CGPoint(x: -width / 2, y: height / 2))
+      path.closeSubpath()
+
+      let node = SKShapeNode(path: path)
+      node.fillColor = .systemTeal
+      node.strokeColor = .white
+      node.lineWidth = 2
+      return node
+
+    default:
+      let node = SKShapeNode(rectOf: CGSize(width: 86, height: 48), cornerRadius: 12)
+      node.fillColor = .systemRed
+      node.strokeColor = .white
+      node.lineWidth = 2
+      return node
+    }
   }
 
   private func updateTargetPracticeLoop(_ currentTime: TimeInterval) {
-    var remainingTargets = activeTargetCount()
+    var remainingTargets = activeEnemyCount()
 
     if remainingTargets == 0, !targetRespawnPending {
       targetRespawnPending = true
@@ -405,16 +547,16 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
        currentTime >= nextTargetSpawnTime {
       targetRespawnPending = false
       self.nextTargetSpawnTime = nil
-      spawnTargetDummies()
-      remainingTargets = activeTargetCount()
+      spawnEncounterEnemies()
+      remainingTargets = activeEnemyCount()
     }
 
     refreshCombatStatusUI(remainingTargets: remainingTargets)
   }
 
-  private func activeTargetCount() -> Int {
+  private func activeEnemyCount() -> Int {
     children.reduce(into: 0) { count, node in
-      if node.name == "target-dummy" {
+      if node.name == "enemy-unit" {
         count += 1
       }
     }
@@ -485,7 +627,7 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
   }
 
   private func refreshCombatStatusUI(remainingTargets: Int? = nil) {
-    let targets = remainingTargets ?? activeTargetCount()
+    let targets = remainingTargets ?? activeEnemyCount()
 
     if targetRespawnPending {
       targetsRemainingLabel.text = "Targets: \(targets) | Reforming..."
