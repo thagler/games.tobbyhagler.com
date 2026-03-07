@@ -2,3 +2,17 @@
 # while allowing the shared index template to be versioned.
 game-planning/docs/.blackboard/*
 !game-planning/docs/.blackboard/INDEX.md
+
+# macOS / Finder
+.DS_Store
+**/.DS_Store
+
+# Xcode local user data and build artifacts
+DerivedData/
+*.xcuserstate
+**/xcuserdata/
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
