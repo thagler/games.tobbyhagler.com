@@ -9,7 +9,7 @@ struct TransitTestView: View {
       SpriteView(scene: scene)
         .ignoresSafeArea()
 
-      Text("Task 0001 Transit Test Space")
+      Text("Transit Target Practice Slice")
         .font(.headline)
         .padding(12)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))

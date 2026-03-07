@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1F495143846ED7A4371978B0 /* TransitTestScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57BCDB02D3ACF25737139F6C /* TransitTestScene.swift */; };
+		7E03B4D14BE148B3A8C9D201 /* PrototypeDefinitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96A1F4C2386D47AB9E5D1C77 /* PrototypeDefinitions.swift */; };
 		8D5BA6E29B067ED4C555F90A /* BootstrapConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A58BE02282F3C18ADACF2D9A /* BootstrapConfig.swift */; };
 		BCEA68840E022C6CB8729990 /* SalvageFrontierApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E48BEDEDB8D5652F0D882B6 /* SalvageFrontierApp.swift */; };
 		CBA4A7A4389DFC428A13CDB9 /* TransitTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FFA1751B46628A1BF545799 /* TransitTestView.swift */; };
@@ -17,6 +18,7 @@
 		4FFA1751B46628A1BF545799 /* TransitTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitTestView.swift; sourceTree = "<group>"; };
 		57BCDB02D3ACF25737139F6C /* TransitTestScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitTestScene.swift; sourceTree = "<group>"; };
 		6E48BEDEDB8D5652F0D882B6 /* SalvageFrontierApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SalvageFrontierApp.swift; sourceTree = "<group>"; };
+		96A1F4C2386D47AB9E5D1C77 /* PrototypeDefinitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrototypeDefinitions.swift; sourceTree = "<group>"; };
 		964C9F9B535E2148C906B384 /* SalvageFrontier.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SalvageFrontier.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A58BE02282F3C18ADACF2D9A /* BootstrapConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootstrapConfig.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -45,6 +47,7 @@
 			isa = PBXGroup;
 			children = (
 				A58BE02282F3C18ADACF2D9A /* BootstrapConfig.swift */,
+				96A1F4C2386D47AB9E5D1C77 /* PrototypeDefinitions.swift */,
 			);
 			path = Systems;
 			sourceTree = "<group>";
@@ -141,6 +144,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D5BA6E29B067ED4C555F90A /* BootstrapConfig.swift in Sources */,
+				7E03B4D14BE148B3A8C9D201 /* PrototypeDefinitions.swift in Sources */,
 				BCEA68840E022C6CB8729990 /* SalvageFrontierApp.swift in Sources */,
 				1F495143846ED7A4371978B0 /* TransitTestScene.swift in Sources */,
 				CBA4A7A4389DFC428A13CDB9 /* TransitTestView.swift in Sources */,
