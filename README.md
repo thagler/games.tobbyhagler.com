@@ -1,11 +1,12 @@
 # games.tobbyhagler.com
 
-Showcase site for playable web game builds and upcoming releases.
+Showcase site for playable web game builds and upcoming releases, plus active prototype source for Salvage Frontier iOS development.
 
 ## Repository layout
 
 - `index.html` static landing page for GitHub Pages
-- `src/` showcase source modules (future app code)
+- `src/` source projects
+- `src/salvage-frontier-ios/` native iOS SpriteKit prototype for Salvage Frontier
 - `public/` showcase static assets
 - `tests/` showcase tests
 - `games/` deployed game builds (`games/<slug>/`)
@@ -38,6 +39,28 @@ Requirements:
 - Slug must use lowercase letters, numbers, and hyphens.
 
 The resulting game URL path is `/games/<game-slug>/`.
+
+## Salvage Frontier iOS prototype
+
+The active iOS prototype lives in `src/salvage-frontier-ios/`.
+
+Build from CLI:
+
+```bash
+xcodebuild -project src/salvage-frontier-ios/SalvageFrontier.xcodeproj \
+  -scheme SalvageFrontier \
+  -destination 'generic/platform=iOS Simulator' \
+  -derivedDataPath /tmp/sf-derived build
+```
+
+Run in simulator:
+
+```bash
+xcrun simctl boot 'iPhone 16e' || true
+xcrun simctl bootstatus 'iPhone 16e' -b
+xcrun simctl install 'iPhone 16e' /tmp/sf-derived/Build/Products/Debug-iphonesimulator/SalvageFrontier.app
+xcrun simctl launch 'iPhone 16e' com.tobbyhagler.salvagefrontier
+```
 
 ## Cloudflare cache purge
 

@@ -1,6 +1,9 @@
-# Xcode Project Placeholder
+# SalvageFrontier Xcode Project
 
-Create or open `SalvageFrontier.xcodeproj` in Xcode and include the `SalvageFrontier/` source folder.
+This project is live and checked in.
 
-Expected scheme: `SalvageFrontier`
-Target: iOS app
+- Scheme: `SalvageFrontier`
+- Target: iOS app
+- Bundle ID: `com.tobbyhagler.salvagefrontier`
+
+Open this `.xcodeproj` in Xcode to run the current SpriteKit prototype on a simulator or device.
