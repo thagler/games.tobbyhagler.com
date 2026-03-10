@@ -29,6 +29,7 @@ struct EnemyDefinition: Codable, Equatable {
   let weaponID: String?
   let collisionDamage: Int
   let salvageValue: Int
+  let rewardDropProfileID: String?
 }
 
 struct WeaponDefinition: Codable, Equatable {
@@ -41,6 +42,9 @@ struct WeaponDefinition: Codable, Equatable {
   let projectileStyleID: String
   let fireMode: FireMode
   let allowedFaction: Faction
+  let burstCount: Int?
+  let burstInterval: TimeInterval?
+  let burstCooldown: TimeInterval?
 }
 
 struct ShipLoadout: Codable, Equatable {
@@ -54,7 +58,7 @@ struct ShipLoadout: Codable, Equatable {
 
 struct EncounterSpawnDefinition: Codable, Equatable {
   let enemyID: String
-  let laneIndex: Int
+  let referenceLaneIndex: Int
   let spawnYOffset: CGFloat
   let initialFireDelay: TimeInterval?
 }
@@ -63,6 +67,21 @@ struct EncounterPatternDefinition: Codable, Equatable {
   let id: String
   let displayName: String
   let entries: [EncounterSpawnDefinition]
+  let salvageCrateReferenceLaneIndex: Int?
+  let salvageCrateSpawnChance: Double
+}
+
+enum RewardDropType: String, Codable {
+  case salvageToken
+  case chargeToken
+  case upgradeHook
+}
+
+struct RewardDropProfile: Codable, Equatable {
+  let id: String
+  let salvageChance: Double
+  let chargeChance: Double
+  let upgradeChanceHook: Double
 }
 
 enum PrototypeDefinitions {
@@ -76,18 +95,24 @@ enum PrototypeDefinitions {
       ammoCapacity: nil,
       projectileStyleID: "player-bolt",
       fireMode: .auto,
-      allowedFaction: .player
+      allowedFaction: .player,
+      burstCount: nil,
+      burstInterval: nil,
+      burstCooldown: nil
     ),
     WeaponDefinition(
       id: "scout-needle",
       displayName: "Scout Needle",
       damage: 1,
-      rateOfFire: 2.0,
+      rateOfFire: 1.1,
       projectileSpeed: 280,
       ammoCapacity: nil,
       projectileStyleID: "scout-needle",
-      fireMode: .single,
-      allowedFaction: .hostile
+      fireMode: .burst,
+      allowedFaction: .hostile,
+      burstCount: 3,
+      burstInterval: 0.12,
+      burstCooldown: 1.1
     ),
   ]
 
@@ -101,18 +126,47 @@ enum PrototypeDefinitions {
       styleID: "dummy-rect",
       weaponID: nil,
       collisionDamage: BootstrapConfig.targetBreachHullDamage,
-      salvageValue: 1
+      salvageValue: 1,
+      rewardDropProfileID: nil
     ),
     EnemyDefinition(
       id: "scout-mk1",
       displayName: "Scout MK-I",
       maxHull: 2,
-      movementSpeed: BootstrapConfig.targetApproachSpeed + 10,
+      movementSpeed: BootstrapConfig.scoutApproachSpeed,
       laneChangeBehavior: .hold,
       styleID: "scout-delta",
       weaponID: "scout-needle",
-      collisionDamage: BootstrapConfig.targetBreachHullDamage,
-      salvageValue: 2
+      collisionDamage: BootstrapConfig.scoutBreachHullDamage,
+      salvageValue: 2,
+      rewardDropProfileID: "scout-light"
+    ),
+    EnemyDefinition(
+      id: "brute-hauler",
+      displayName: "Brute Hauler",
+      maxHull: BootstrapConfig.bruteHull,
+      movementSpeed: BootstrapConfig.bruteApproachSpeed,
+      laneChangeBehavior: .hold,
+      styleID: "brute-block",
+      weaponID: nil,
+      collisionDamage: BootstrapConfig.bruteBreachHullDamage,
+      salvageValue: 4,
+      rewardDropProfileID: "brute-heavy"
+    ),
+  ]
+
+  static let rewardDropProfiles: [RewardDropProfile] = [
+    RewardDropProfile(
+      id: "scout-light",
+      salvageChance: 0.7,
+      chargeChance: 0.18,
+      upgradeChanceHook: 0.0
+    ),
+    RewardDropProfile(
+      id: "brute-heavy",
+      salvageChance: 1.0,
+      chargeChance: 0.0,
+      upgradeChanceHook: 0.0
     ),
   ]
 
@@ -123,11 +177,13 @@ enum PrototypeDefinitions {
       entries: [
         EncounterSpawnDefinition(
           enemyID: "scout-mk1",
-          laneIndex: 2,
+          referenceLaneIndex: 3,
           spawnYOffset: 180,
           initialFireDelay: 0.35
         ),
-      ]
+      ],
+      salvageCrateReferenceLaneIndex: nil,
+      salvageCrateSpawnChance: 0
     ),
     EncounterPatternDefinition(
       id: "split-pressure",
@@ -135,17 +191,19 @@ enum PrototypeDefinitions {
       entries: [
         EncounterSpawnDefinition(
           enemyID: "dummy-target",
-          laneIndex: 1,
+          referenceLaneIndex: 1,
           spawnYOffset: 150,
           initialFireDelay: nil
         ),
         EncounterSpawnDefinition(
           enemyID: "scout-mk1",
-          laneIndex: 3,
+          referenceLaneIndex: 5,
           spawnYOffset: 240,
           initialFireDelay: 0.5
         ),
-      ]
+      ],
+      salvageCrateReferenceLaneIndex: nil,
+      salvageCrateSpawnChance: 0
     ),
     EncounterPatternDefinition(
       id: "center-screen",
@@ -153,23 +211,25 @@ enum PrototypeDefinitions {
       entries: [
         EncounterSpawnDefinition(
           enemyID: "dummy-target",
-          laneIndex: 1,
+          referenceLaneIndex: 1,
           spawnYOffset: 130,
           initialFireDelay: nil
         ),
         EncounterSpawnDefinition(
           enemyID: "dummy-target",
-          laneIndex: 3,
+          referenceLaneIndex: 5,
           spawnYOffset: 130,
           initialFireDelay: nil
         ),
         EncounterSpawnDefinition(
           enemyID: "scout-mk1",
-          laneIndex: 2,
+          referenceLaneIndex: 3,
           spawnYOffset: 290,
           initialFireDelay: 0.65
         ),
-      ]
+      ],
+      salvageCrateReferenceLaneIndex: nil,
+      salvageCrateSpawnChance: 0
     ),
     EncounterPatternDefinition(
       id: "stacked-center",
@@ -177,17 +237,175 @@ enum PrototypeDefinitions {
       entries: [
         EncounterSpawnDefinition(
           enemyID: "scout-mk1",
-          laneIndex: 2,
+          referenceLaneIndex: 3,
           spawnYOffset: 120,
           initialFireDelay: 0.25
         ),
         EncounterSpawnDefinition(
           enemyID: "dummy-target",
-          laneIndex: 2,
+          referenceLaneIndex: 3,
           spawnYOffset: 320,
           initialFireDelay: nil
         ),
-      ]
+      ],
+      salvageCrateReferenceLaneIndex: nil,
+      salvageCrateSpawnChance: 0
+    ),
+    EncounterPatternDefinition(
+      id: "breacher-crossload",
+      displayName: "Breacher Crossload",
+      entries: [
+        EncounterSpawnDefinition(
+          enemyID: "scout-mk1",
+          referenceLaneIndex: 1,
+          spawnYOffset: 150,
+          initialFireDelay: 0.4
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "brute-hauler",
+          referenceLaneIndex: 5,
+          spawnYOffset: 240,
+          initialFireDelay: nil
+        ),
+      ],
+      salvageCrateReferenceLaneIndex: nil,
+      salvageCrateSpawnChance: 0
+    ),
+    EncounterPatternDefinition(
+      id: "salvage-bait",
+      displayName: "Salvage Bait",
+      entries: [
+        EncounterSpawnDefinition(
+          enemyID: "dummy-target",
+          referenceLaneIndex: 1,
+          spawnYOffset: 120,
+          initialFireDelay: nil
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "brute-hauler",
+          referenceLaneIndex: 3,
+          spawnYOffset: 300,
+          initialFireDelay: nil
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "scout-mk1",
+          referenceLaneIndex: 5,
+          spawnYOffset: 160,
+          initialFireDelay: 0.35
+        ),
+      ],
+      salvageCrateReferenceLaneIndex: nil,
+      salvageCrateSpawnChance: 0
+    ),
+    EncounterPatternDefinition(
+      id: "stacked-breach-choice",
+      displayName: "Stacked Breach Choice",
+      entries: [
+        EncounterSpawnDefinition(
+          enemyID: "brute-hauler",
+          referenceLaneIndex: 3,
+          spawnYOffset: 160,
+          initialFireDelay: nil
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "dummy-target",
+          referenceLaneIndex: 3,
+          spawnYOffset: 340,
+          initialFireDelay: nil
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "scout-mk1",
+          referenceLaneIndex: 1,
+          spawnYOffset: 140,
+          initialFireDelay: 0.38
+        ),
+      ],
+      salvageCrateReferenceLaneIndex: nil,
+      salvageCrateSpawnChance: 0
+    ),
+    EncounterPatternDefinition(
+      id: "scout-swarm",
+      displayName: "Scout Swarm",
+      entries: [
+        EncounterSpawnDefinition(
+          enemyID: "scout-mk1",
+          referenceLaneIndex: 1,
+          spawnYOffset: 120,
+          initialFireDelay: 0.24
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "scout-mk1",
+          referenceLaneIndex: 3,
+          spawnYOffset: 220,
+          initialFireDelay: 0.38
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "scout-mk1",
+          referenceLaneIndex: 5,
+          spawnYOffset: 320,
+          initialFireDelay: 0.52
+        ),
+      ],
+      salvageCrateReferenceLaneIndex: 3,
+      salvageCrateSpawnChance: 0.4
+    ),
+    EncounterPatternDefinition(
+      id: "double-brute-pressure",
+      displayName: "Double Brute Pressure",
+      entries: [
+        EncounterSpawnDefinition(
+          enemyID: "brute-hauler",
+          referenceLaneIndex: 1,
+          spawnYOffset: 150,
+          initialFireDelay: nil
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "dummy-target",
+          referenceLaneIndex: 3,
+          spawnYOffset: 270,
+          initialFireDelay: nil
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "brute-hauler",
+          referenceLaneIndex: 5,
+          spawnYOffset: 210,
+          initialFireDelay: nil
+        ),
+      ],
+      salvageCrateReferenceLaneIndex: 3,
+      salvageCrateSpawnChance: 0.55
+    ),
+    EncounterPatternDefinition(
+      id: "center-blockade",
+      displayName: "Center Blockade",
+      entries: [
+        EncounterSpawnDefinition(
+          enemyID: "dummy-target",
+          referenceLaneIndex: 2,
+          spawnYOffset: 110,
+          initialFireDelay: nil
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "brute-hauler",
+          referenceLaneIndex: 3,
+          spawnYOffset: 240,
+          initialFireDelay: nil
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "dummy-target",
+          referenceLaneIndex: 4,
+          spawnYOffset: 110,
+          initialFireDelay: nil
+        ),
+        EncounterSpawnDefinition(
+          enemyID: "scout-mk1",
+          referenceLaneIndex: 5,
+          spawnYOffset: 320,
+          initialFireDelay: 0.48
+        ),
+      ],
+      salvageCrateReferenceLaneIndex: 1,
+      salvageCrateSpawnChance: 0.45
     ),
   ]
 

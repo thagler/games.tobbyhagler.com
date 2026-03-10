@@ -2,7 +2,10 @@ import SpriteKit
 import SwiftUI
 
 struct TransitTestView: View {
-  private let scene = TransitTestScene(size: CGSize(width: 1080, height: 1920))
+  private let scene = TransitTestScene(
+    size: CGSize(width: 1080, height: 1920),
+    activeLaneCount: BootstrapConfig.defaultActiveLaneCount
+  )
 
   var body: some View {
     ZStack(alignment: .topLeading) {
