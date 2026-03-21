@@ -23,7 +23,7 @@ struct EnemyDefinition: Codable, Equatable {
   let id: String
   let displayName: String
   let maxHull: Int
-  let movementSpeed: CGFloat
+  let movementSpeed: TimeInterval
   let laneChangeBehavior: LaneChangeBehavior
   let styleID: String
   let weaponID: String?
@@ -104,15 +104,15 @@ enum PrototypeDefinitions {
       id: "scout-needle",
       displayName: "Scout Needle",
       damage: 1,
-      rateOfFire: 1.1,
+      rateOfFire: 2.2,
       projectileSpeed: 280,
       ammoCapacity: nil,
       projectileStyleID: "scout-needle",
-      fireMode: .burst,
+      fireMode: .single,
       allowedFaction: .hostile,
-      burstCount: 3,
-      burstInterval: 0.12,
-      burstCooldown: 1.1
+      burstCount: nil,
+      burstInterval: nil,
+      burstCooldown: nil
     ),
   ]
 
@@ -121,7 +121,7 @@ enum PrototypeDefinitions {
       id: "dummy-target",
       displayName: "Target Dummy",
       maxHull: BootstrapConfig.targetDummyHP,
-      movementSpeed: BootstrapConfig.targetApproachSpeed,
+      movementSpeed: BootstrapConfig.targetTraversalDuration,
       laneChangeBehavior: .hold,
       styleID: "dummy-rect",
       weaponID: nil,
@@ -133,7 +133,7 @@ enum PrototypeDefinitions {
       id: "scout-mk1",
       displayName: "Scout MK-I",
       maxHull: 2,
-      movementSpeed: BootstrapConfig.scoutApproachSpeed,
+      movementSpeed: BootstrapConfig.scoutTraversalDuration,
       laneChangeBehavior: .hold,
       styleID: "scout-delta",
       weaponID: "scout-needle",
@@ -145,7 +145,7 @@ enum PrototypeDefinitions {
       id: "brute-hauler",
       displayName: "Brute Hauler",
       maxHull: BootstrapConfig.bruteHull,
-      movementSpeed: BootstrapConfig.bruteApproachSpeed,
+      movementSpeed: BootstrapConfig.bruteTraversalDuration,
       laneChangeBehavior: .hold,
       styleID: "brute-block",
       weaponID: nil,

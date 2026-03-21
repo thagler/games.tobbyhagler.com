@@ -4,6 +4,8 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
   private enum PhysicsCategory {
     static let playerProjectile: UInt32 = 1 << 0
     static let enemyBody: UInt32 = 1 << 1
+    static let enemyProjectile: UInt32 = 1 << 2
+    static let playerBody: UInt32 = 1 << 3
   }
 
   private let ship: SKShapeNode = {
@@ -47,7 +49,7 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
   private var playerHull = BootstrapConfig.playerHullMax
   private var playerLoadout = PrototypeDefinitions.defaultShipLoadout
   private var isDraggingShip = false
-  private var isInputAboveFireLine = false
+  private var isInputBelowFireLine = false
   private var collectedSalvageTokens = 0
   private var collectedChargeTokens = 0
   private var chargeTokensTowardOvercharge = 0
@@ -81,6 +83,7 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     configurePhysicsWorld()
 
     ship.position = CGPoint(x: frame.midX, y: 180)
+    ship.physicsBody = playerShipPhysicsBody()
     addChild(ship)
 
     configureLaneGuides()
@@ -133,12 +136,12 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     updateEnemyProjectiles(dt)
     updateRewardDrops(currentTime: currentTime, dt: dt)
     updateSalvageCrates(currentTime: currentTime, dt: dt)
-    evaluateTargetBreachRisk()
+    cleanupMissedTargets()
     updateTargetPracticeLoop(currentTime)
 
     if isPlayerAlive,
        isDraggingShip,
-       isInputAboveFireLine,
+       isInputBelowFireLine,
        currentTime - lastShotTime >= currentPlayerFireInterval(at: currentTime) {
       fireProjectile()
       lastShotTime = currentTime
@@ -203,6 +206,37 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
       let projectileNode = projectileBody.node,
       let enemyNode = enemyBody.node
     else {
+      let enemyProjectileContact = [
+        (firstBody, secondBody),
+        (secondBody, firstBody),
+      ].first {
+        $0.0.categoryBitMask == PhysicsCategory.enemyProjectile &&
+          $0.1.categoryBitMask == PhysicsCategory.playerBody
+      }
+
+      let enemyBodyContact = [
+        (firstBody, secondBody),
+        (secondBody, firstBody),
+      ].first {
+        $0.0.categoryBitMask == PhysicsCategory.enemyBody &&
+          $0.1.categoryBitMask == PhysicsCategory.playerBody
+      }
+
+      if let (enemyProjectileBody, _) = enemyProjectileContact,
+         let projectileNode = enemyProjectileBody.node {
+        let damage = (projectileNode.userData?["damage"] as? Int) ?? 1
+        projectileNode.removeFromParent()
+        applyHullDamage(damage)
+        spawnHitFlash(at: ship.position, color: .systemRed, radius: 12, zPosition: 14)
+        return
+      }
+
+      if let (enemyBody, _) = enemyBodyContact,
+         let enemyNode = enemyBody.node {
+        handleTargetBreach(enemyNode)
+        return
+      }
+
       return
     }
 
@@ -285,6 +319,25 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     physicsWorld.contactDelegate = self
   }
 
+  private func playerShipPhysicsBody() -> SKPhysicsBody {
+    let width: CGFloat = 72
+    let height: CGFloat = 50
+    let path = CGMutablePath()
+    path.move(to: CGPoint(x: 0, y: height / 2))
+    path.addLine(to: CGPoint(x: width / 2, y: -height / 2))
+    path.addLine(to: CGPoint(x: -width / 2, y: -height / 2))
+    path.closeSubpath()
+
+    let body = SKPhysicsBody(polygonFrom: path)
+    body.isDynamic = false
+    body.affectedByGravity = false
+    body.categoryBitMask = PhysicsCategory.playerBody
+    body.contactTestBitMask = PhysicsCategory.enemyProjectile | PhysicsCategory.enemyBody
+    body.collisionBitMask = 0
+    body.usesPreciseCollisionDetection = true
+    return body
+  }
+
   private func handleProjectileHit(projectile: SKNode, target: SKNode, at contactPoint: CGPoint) {
     projectile.removeFromParent()
     applyPrototypeDamage(currentPlayerProjectileDamage(), to: target, at: contactPoint)
@@ -307,7 +360,7 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
 
   private func updateApproachingTargets(_ dt: CGFloat) {
     enumerateChildNodes(withName: "enemy-unit") { node, _ in
-      let movementSpeed = (node.userData?["movementSpeed"] as? CGFloat) ?? BootstrapConfig.targetApproachSpeed
+      let movementSpeed = (node.userData?["movementSpeed"] as? CGFloat) ?? self.speedForTraversalDuration(BootstrapConfig.defaultEnemyTraversalDuration)
       node.position.y -= movementSpeed * dt
     }
   }
@@ -378,24 +431,13 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
   }
 
   private func updateEnemyProjectiles(_ dt: CGFloat) {
-    var hitProjectiles: [SKNode] = []
-
     enumerateChildNodes(withName: "enemy-projectile") { node, _ in
       let projectileSpeed = (node.userData?["projectileSpeed"] as? CGFloat) ?? 320
       node.position.y -= projectileSpeed * dt
 
-      if node.frame.intersects(self.ship.frame) {
-        hitProjectiles.append(node)
-      } else if node.position.y < self.frame.minY - 120 {
+      if node.position.y < self.frame.minY - 120 {
         node.removeFromParent()
       }
-    }
-
-    for projectile in hitProjectiles {
-      let damage = (projectile.userData?["damage"] as? Int) ?? 1
-      projectile.removeFromParent()
-      applyHullDamage(damage)
-      spawnHitFlash(at: ship.position, color: .systemRed, radius: 12, zPosition: 14)
     }
   }
 
@@ -412,6 +454,14 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
       "damage": weapon.damage,
       "projectileSpeed": weapon.projectileSpeed,
     ])
+    let body = SKPhysicsBody(rectangleOf: CGSize(width: 8, height: 22))
+    body.affectedByGravity = false
+    body.isDynamic = true
+    body.categoryBitMask = PhysicsCategory.enemyProjectile
+    body.contactTestBitMask = PhysicsCategory.playerBody
+    body.collisionBitMask = 0
+    body.usesPreciseCollisionDetection = true
+    projectile.physicsBody = body
 
     let trail = SKShapeNode(rectOf: CGSize(width: 4, height: 14), cornerRadius: 2)
     trail.fillColor = projectile.fillColor.withAlphaComponent(0.45)
@@ -432,26 +482,14 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     }
   }
 
-  private func evaluateTargetBreachRisk() {
-    let breachLineY = ship.position.y + BootstrapConfig.targetBreachDistanceFromShip
+  private func cleanupMissedTargets() {
     let missCleanupY = ship.position.y - BootstrapConfig.targetMissCleanupDistanceFromShip
-    var breachedTargets: [SKNode] = []
     var missedTargets: [SKNode] = []
 
     enumerateChildNodes(withName: "enemy-unit") { node, _ in
-      if node.position.y <= breachLineY {
-        if self.isLaneMatchedForBreach(targetX: node.position.x) {
-          breachedTargets.append(node)
-        } else if node.position.y <= missCleanupY {
-          missedTargets.append(node)
-        }
-      } else if node.frame.intersects(self.ship.frame), self.isLaneMatchedForBreach(targetX: node.position.x) {
-        breachedTargets.append(node)
+      if node.position.y <= missCleanupY {
+        missedTargets.append(node)
       }
-    }
-
-    for target in breachedTargets {
-      handleTargetBreach(target)
     }
 
     for target in missedTargets {
@@ -482,11 +520,6 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     if playerHull == 0 {
       handlePlayerDestroyed()
     }
-  }
-
-  private func isLaneMatchedForBreach(targetX: CGFloat) -> Bool {
-    let targetLane = nearestLaneIndex(to: targetX)
-    return laneMatchCandidates(forShipX: ship.position.x).contains(targetLane)
   }
 
   private func laneMatchCandidates(forShipX shipX: CGFloat) -> Set<Int> {
@@ -646,7 +679,7 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     enemy.userData = NSMutableDictionary(dictionary: [
       "enemyID": definition.id,
       "hp": definition.maxHull,
-      "movementSpeed": definition.movementSpeed,
+      "movementSpeed": speedForTraversalDuration(definition.movementSpeed),
       "collisionDamage": definition.collisionDamage,
       "salvageValue": definition.salvageValue,
     ])
@@ -665,6 +698,8 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     let body: SKPhysicsBody
     if definition.styleID == "scout-delta", let path = enemy.path {
       body = SKPhysicsBody(polygonFrom: path)
+    } else if definition.styleID == "brute-block" {
+      body = SKPhysicsBody(rectangleOf: CGSize(width: 110, height: 64))
     } else {
       body = SKPhysicsBody(rectangleOf: CGSize(width: 86, height: 48))
     }
@@ -978,7 +1013,7 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
       let location = matchedTouch.location(in: self)
       controllingTouchX = location.x
       isDraggingShip = true
-      isInputAboveFireLine = location.y >= fireGateLineY()
+      isInputBelowFireLine = location.y <= fireGateLineY()
       return
     }
 
@@ -987,7 +1022,7 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
       let location = controllingTouch.location(in: self)
       controllingTouchX = location.x
       isDraggingShip = true
-      isInputAboveFireLine = location.y >= fireGateLineY()
+      isInputBelowFireLine = location.y <= fireGateLineY()
     } else {
       clearPlayerInputState()
     }
@@ -997,7 +1032,7 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
     controllingTouch = nil
     controllingTouchX = nil
     isDraggingShip = false
-    isInputAboveFireLine = false
+    isInputBelowFireLine = false
   }
 
   private func handlePlayerDestroyed() {
@@ -1011,6 +1046,11 @@ final class TransitTestScene: SKScene, SKPhysicsContactDelegate {
 
   private func fireGateLineY() -> CGFloat {
     ship.position.y + BootstrapConfig.targetBreachDistanceFromShip
+  }
+
+  private func speedForTraversalDuration(_ traversalDuration: TimeInterval) -> CGFloat {
+    let duration = max(traversalDuration, 0.1)
+    return frame.height / CGFloat(duration)
   }
 
   private func nearestLaneIndex(to x: CGFloat) -> Int {
