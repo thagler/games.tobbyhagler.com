@@ -2,5 +2,5 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'none'; img-src 'self' https://www.googletagmanager.com https://*.google-analytics.com; style-src 'self'; script-src 'self' https://www.googletagmanager.com https://static.cloudflareinsights.com 'sha256-o84OlDYC+g3hQEaEgN8AUYidhAuWBl5gmddQJEfL/Y8='; connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://*.google.com https://cloudflareinsights.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
