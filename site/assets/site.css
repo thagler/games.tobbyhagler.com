@@ -1,0 +1,56 @@
+/* Preserve the original cream, teal, and serif showcase identity. */
+:root { --bg:#f3efe5; --ink:#1c1b18; --accent:#005f73; --card:#fffaf0; --line:#d8d1c0; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Georgia,"Times New Roman",serif; background:radial-gradient(circle at top left,#fffdf7 0%,var(--bg) 55%,#e8e0cf 100%); color:var(--ink); min-height:100vh; line-height:1.6; }
+a { color:var(--accent); text-decoration-thickness:2px; text-underline-offset:3px; }
+a:hover { text-decoration-thickness:3px; }
+a:focus-visible,summary:focus-visible { outline:3px solid var(--accent); outline-offset:5px; border-radius:2px; }
+.skip { position:absolute; top:-100px; left:1rem; padding:.6rem; background:white; z-index:2; }
+.skip:focus { top:1rem; }
+header,main,footer { max-width:1020px; margin:auto; padding:1.5rem 1.25rem; }
+header { display:flex; align-items:center; justify-content:space-between; gap:1rem; border-bottom:1px solid var(--line); }
+.brand { display:flex; align-items:center; gap:.65rem; color:var(--ink); text-decoration:none; font-weight:bold; font-size:1.1rem; }
+.brand img { width:52px; height:52px; object-fit:contain; }
+nav { display:flex; flex-wrap:wrap; gap:.4rem 1.1rem; }
+nav a { display:inline-block; padding:.45rem 0; }
+main { padding-top:2.4rem; padding-bottom:3rem; }
+h1 { margin:0 0 .65rem; font-size:clamp(2.1rem,5vw,3.4rem); line-height:1.12; letter-spacing:.01em; }
+h2 { line-height:1.25; font-size:1.5rem; margin:0 0 .7rem; }
+h3 { font-size:1.1rem; margin:0 0 .4rem; }
+p { margin:.5rem 0 1rem; }
+.lead { font-size:1.23rem; max-width:38rem; }
+.eyebrow { font-family:system-ui,sans-serif; text-transform:uppercase; font-size:.72rem; letter-spacing:.13em; font-weight:650; color:var(--accent); }
+.hero { display:grid; grid-template-columns:1.12fr 1fr; gap:2.5rem; align-items:center; }
+.hero-art { display:block; width:100%; max-height:580px; object-fit:cover; object-position:top; border-radius:14px; box-shadow:0 9px 25px #17263b22; }
+.game-heading { display:flex; gap:1rem; align-items:center; }
+.game-heading img { width:76px; height:76px; border-radius:17px; }
+.game-heading h1 { font-size:clamp(2.3rem,5vw,3.4rem); }
+.actions { display:flex; gap:.7rem 1.4rem; align-items:center; flex-wrap:wrap; margin:1.5rem 0 1rem; }
+.button { display:inline-block; background:var(--accent); color:#fff; padding:.65rem 1rem; border-radius:6px; font-weight:bold; text-decoration:none; }
+.note { font-size:.91rem; color:#514d43; }
+.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-top:2rem; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:1.3rem; }
+.card p:last-child { margin-bottom:0; }
+.section { margin-top:2.7rem; }
+.shot { width:100%; height:auto; display:block; border-radius:12px; border:1px solid var(--line); }
+figure { margin:1.5rem 0 0; }
+figcaption { font-size:.88rem; color:#514d43; margin-top:.6rem; }
+.prose { max-width:760px; }
+.prose section { margin-top:2.2rem; }
+ul { padding-left:1.35rem; }
+li { margin:.45rem 0; }
+details { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:1rem 1.1rem; margin:.7rem 0; }
+summary { cursor:pointer; font-weight:bold; }
+details p { margin:.85rem 0 .15rem; }
+footer { border-top:1px solid var(--line); font-size:.88rem; padding-top:1.5rem; padding-bottom:2rem; }
+.footer-row { display:flex; align-items:center; justify-content:space-between; gap:1.3rem; flex-wrap:wrap; }
+.credit { display:flex; align-items:center; gap:1rem; }
+.credit img { width:62px; height:62px; }
+.credit p { margin:0; }
+footer nav { margin-top:1rem; }
+@media(max-width:640px) { header { align-items:flex-start; flex-direction:column; gap:.4rem; } .hero { grid-template-columns:1fr; gap:1.6rem; } .hero-art { max-height:none; width:100%; } .grid { grid-template-columns:1fr; } main { padding-top:1.8rem; } .brand { font-size:1rem; } }
+
+.email-reveal { font:inherit; color:var(--accent); background:var(--card); border:1px solid var(--accent); border-radius:5px; padding:.35rem .65rem; cursor:pointer; min-height:44px; }
+.email-reveal:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+.email-address { overflow-wrap:anywhere; }
+.credit a { display:inline-flex; }
